@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>my rewards tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg:#0f0f0f;--bg2:#181818;--bg3:#222222;--border:#2e2e2e;
+    --text:#f0f0f0;--text2:#888;--text3:#555;
+    --green:#1fbd85;--green-bg:rgba(31,189,133,0.1);--green-border:rgba(31,189,133,0.3);
+    --red:#e05555;--red-bg:rgba(224,85,85,0.1);--red-border:rgba(224,85,85,0.3);
+    --blue:#4f9cf9;--blue-bg:rgba(79,156,249,0.1);--blue-border:rgba(79,156,249,0.3);
+    --gold:#e0a035;--gold-bg:rgba(224,160,53,0.1);--gold-border:rgba(224,160,53,0.3);
+    --purple:#a78bfa;--purple-bg:rgba(167,139,250,0.1);--purple-border:rgba(167,139,250,0.3);
+    --radius:10px;--radius-sm:6px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;}
+  input,select,button{font-family:'DM Sans',sans-serif;font-size:13px;}
+  input,select{background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:var(--radius-sm);padding:8px 10px;outline:none;}
+  input:focus,select:focus{border-color:#444;}
+  select option{background:var(--bg3);}
+  .app{max-width:700px;margin:0 auto;padding:2rem 1.25rem 4rem;}
+  .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:2rem;}
+  .header-left h1{font-size:22px;font-weight:600;letter-spacing:-0.5px;}
+  .header-left p{font-size:12px;color:var(--text3);font-family:'DM Mono',monospace;margin-top:2px;}
+  .pts-badge{display:flex;align-items:center;gap:10px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:10px 18px;}
+  .pts-badge .num{font-size:28px;font-weight:600;font-family:'DM Mono',monospace;line-height:1;}
+  .pts-badge .num.neg{color:var(--red);}
+  .pts-badge .lbl{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;}
+  .status-bar{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:8px 14px;font-size:12px;color:var(--text3);margin-bottom:1.25rem;display:flex;align-items:center;gap:8px;font-family:'DM Mono',monospace;}
+  .status-dot{width:7px;height:7px;border-radius:50%;background:var(--text3);flex-shrink:0;}
+  .status-dot.ok{background:var(--green);}
+  .status-dot.err{background:var(--red);}
+  .status-dot.saving{background:var(--gold);animation:pulse 1s infinite;}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+  .tabs{display:flex;gap:4px;margin-bottom:1.25rem;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:4px;}
+  .tab{flex:1;padding:8px 0;font-size:13px;font-weight:500;color:var(--text3);background:none;border:none;cursor:pointer;border-radius:var(--radius-sm);transition:all 0.15s;}
+  .tab:hover{color:var(--text2);}
+  .tab.active{background:var(--bg3);color:var(--text);}
+  .section{display:none;}.section.active{display:block;}
+  .add-form{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:1.1rem 1.25rem;margin-bottom:1.25rem;}
+  .form-toggle{display:flex;gap:6px;margin-bottom:12px;}
+  .ftype-btn{flex:1;padding:7px 0;font-size:12px;font-weight:500;border:1px solid var(--border);background:transparent;border-radius:var(--radius-sm);cursor:pointer;color:var(--text3);transition:all 0.15s;}
+  .ftype-btn.active{background:var(--bg3);color:var(--text);border-color:#444;}
+  .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+  .row input[type=text],.row select{flex:1;min-width:120px;}
+  .pts-pair{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;align-items:center;}
+  .pts-label{font-size:11px;font-weight:600;padding:4px 8px;border-radius:var(--radius-sm);text-transform:uppercase;letter-spacing:0.4px;}
+  .pts-label.earn{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border);}
+  .pts-label.skip{background:var(--red-bg);color:var(--red);border:1px solid var(--red-border);}
+  .pts-pair input{width:70px;}
+  .hint{font-size:12px;color:var(--text3);margin-top:8px;}
+  .btn{border:1px solid var(--border);background:var(--bg3);border-radius:var(--radius-sm);padding:7px 14px;font-size:13px;cursor:pointer;color:var(--text);transition:all 0.15s;white-space:nowrap;}
+  .btn:hover{border-color:#444;background:#2a2a2a;}
+  .btn-green{background:var(--green-bg);border-color:var(--green-border);color:var(--green);font-weight:600;}
+  .btn-green:hover{background:rgba(31,189,133,0.18);}
+  .btn-green:disabled{opacity:0.35;cursor:not-allowed;}
+  .btn-red{background:var(--red-bg);border-color:var(--red-border);color:var(--red);font-weight:600;}
+  .btn-red:hover{background:rgba(224,85,85,0.18);}
+  .btn-blue{background:var(--blue-bg);border-color:var(--blue-border);color:var(--blue);font-weight:600;}
+  .btn-blue:hover{background:rgba(79,156,249,0.18);}
+  .btn-blue:disabled{opacity:0.35;cursor:not-allowed;}
+  .btn-ghost{background:transparent;border-color:transparent;color:var(--text3);padding:5px 8px;font-size:12px;}
+  .btn-ghost:hover{color:var(--red);background:var(--red-bg);border-color:var(--red-border);}
+  .cat-section{margin-bottom:1.5rem;}
+  .cat-header{display:flex;align-items:center;gap:8px;padding:8px 0 10px;border-bottom:1px solid var(--border);margin-bottom:10px;}
+  .cat-name-text{font-size:14px;font-weight:600;flex:1;}
+  .badge{font-size:11px;font-weight:600;padding:3px 9px;border-radius:99px;text-transform:uppercase;letter-spacing:0.3px;}
+  .badge-green{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border);}
+  .badge-red{background:var(--red-bg);color:var(--red);border:1px solid var(--red-border);}
+  .badge-purple{background:var(--purple-bg);color:var(--purple);border:1px solid var(--purple-border);}
+  .cat-actions{display:flex;gap:6px;margin-bottom:8px;}
+  .cat-actions .btn{flex:1;font-size:13px;font-weight:600;}
+  .edit-panel{display:none;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:10px;}
+  .edit-panel.open{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+  .edit-panel .note{font-size:11px;color:var(--text3);width:100%;margin-top:4px;}
+  .task-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:9px 14px;margin-bottom:6px;display:flex;align-items:center;gap:10px;}
+  .task-card-name{flex:1;font-size:13px;color:var(--text2);}
+  .cat-goal-bar{display:flex;align-items:center;gap:8px;margin-bottom:8px;background:var(--bg3);border-radius:var(--radius-sm);padding:7px 10px;}
+  .cat-goal-bar .lbl{font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;white-space:nowrap;flex-shrink:0;}
+  .cat-mini-bar{flex:1;height:3px;background:var(--border);border-radius:2px;overflow:hidden;}
+  .cat-mini-fill{height:100%;background:var(--purple);border-radius:2px;transition:width 0.5s ease;}
+  .empty{text-align:center;padding:2.5rem;color:var(--text3);font-size:13px;font-family:'DM Mono',monospace;}
+  .reward-section-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--text3);margin-bottom:10px;margin-top:16px;font-family:'DM Mono',monospace;}
+  .reward-section-title:first-child{margin-top:0;}
+  .reward-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:1rem 1.25rem;margin-bottom:10px;transition:border-color 0.2s;}
+  .reward-card.unlocked{border-color:var(--gold-border);}
+  .reward-card.cat-unlocked{border-color:var(--purple-border);}
+  .reward-row{display:flex;align-items:center;gap:10px;}
+  .reward-info{flex:1;}
+  .reward-name{font-size:15px;font-weight:600;margin-bottom:2px;}
+  .reward-sub{font-size:12px;color:var(--text3);font-family:'DM Mono',monospace;}
+  .progress-bar{height:3px;background:var(--bg3);border-radius:2px;overflow:hidden;margin-top:10px;}
+  .progress-fill{height:100%;border-radius:2px;transition:width 0.5s ease;}
+  .fill-blue{background:var(--blue);}
+  .fill-gold{background:var(--gold);}
+  .fill-purple{background:var(--purple);}
+  .milestone-tag{font-size:11px;padding:3px 9px;border-radius:99px;background:var(--gold-bg);color:var(--gold);border:1px solid var(--gold-border);font-weight:600;white-space:nowrap;}
+  .cat-milestone-tag{font-size:11px;padding:3px 9px;border-radius:99px;background:var(--purple-bg);color:var(--purple);border:1px solid var(--purple-border);font-weight:600;white-space:nowrap;}
+  .rtype-toggle{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;}
+  .rtype-btn{flex:1;min-width:90px;padding:7px 0;font-size:12px;font-weight:500;border:1px solid var(--border);background:transparent;border-radius:var(--radius-sm);cursor:pointer;color:var(--text3);transition:all 0.15s;}
+  .rtype-btn.active-spend{background:var(--blue-bg);border-color:var(--blue-border);color:var(--blue);}
+  .rtype-btn.active-milestone{background:var(--gold-bg);border-color:var(--gold-border);color:var(--gold);}
+  .rtype-btn.active-catmilestone{background:var(--purple-bg);border-color:var(--purple-border);color:var(--purple);}
+  .cm-form{margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+  .cm-form select,.cm-form input[type=text]{flex:1;min-width:120px;}
+  .cm-form input[type=number]{width:80px;}
+  .history-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);}
+  .history-item:last-child{border-bottom:none;}
+  .h-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+  .h-dot.earn{background:var(--green);}
+  .h-dot.skip{background:var(--red);}
+  .h-dot.redeem{background:var(--blue);}
+  .h-name{flex:1;font-size:13px;}
+  .h-time{font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;}
+  .h-pts{font-size:14px;font-weight:600;font-family:'DM Mono',monospace;}
+  .h-pts.earn{color:var(--green);}
+  .h-pts.skip{color:var(--red);}
+  .h-pts.redeem{color:var(--blue);}
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:10px 20px;font-size:13px;color:var(--text);opacity:0;transition:all 0.25s;pointer-events:none;z-index:999;font-family:'DM Mono',monospace;white-space:nowrap;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  .no-cats{font-size:13px;color:var(--text3);padding:4px 0;}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="header-left"><h1>my rewards</h1><p>habit tracker</p></div>
+    <div class="pts-badge">
+      <div><div class="num" id="total-pts">0</div></div>
+      <div class="lbl">pts</div>
+    </div>
+  </div>
+  <div class="status-bar">
+    <div class="status-dot" id="status-dot"></div>
+    <span id="status-msg">connecting to google sheets...</span>
+  </div>
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('tasks')">tasks</button>
+    <button class="tab" onclick="switchTab('rewards')">rewards</button>
+    <button class="tab" onclick="switchTab('history')">history</button>
+  </div>
+
+  <div id="tab-tasks" class="section active">
+    <div class="add-form">
+      <div class="form-toggle">
+        <button class="ftype-btn active" id="btn-task" onclick="setFormType('task')">+ task</button>
+        <button class="ftype-btn" id="btn-cat" onclick="setFormType('category')">+ category</button>
+      </div>
+      <div id="form-task">
+        <div id="no-cats-hint" class="no-cats" style="display:none;">create a category first — categories define the points</div>
+        <div id="task-fields" style="display:none;">
+          <div class="row">
+            <input type="text" id="task-name" placeholder="e.g. leetcode medium" />
+            <select id="task-cat"></select>
+            <button class="btn btn-green" onclick="addTask()">add</button>
+          </div>
+        </div>
+      </div>
+      <div id="form-cat" style="display:none;">
+        <div class="row">
+          <input type="text" id="cat-name" placeholder="category name e.g. leetcode" style="flex:1;" />
+        </div>
+        <div class="pts-pair">
+          <span class="pts-label earn">✓ done</span>
+          <input type="number" id="cat-earn" placeholder="pts" min="0" max="9999" />
+          <span class="pts-label skip">✕ skip</span>
+          <input type="number" id="cat-skip" placeholder="pts" min="0" max="9999" />
+          <button class="btn" style="margin-left:auto;" onclick="addCategory()">add category</button>
+        </div>
+      </div>
+    </div>
+    <div id="tasks-list"></div>
+  </div>
+
+  <div id="tab-rewards" class="section">
+    <div class="add-form">
+      <div class="rtype-toggle">
+        <button class="rtype-btn active-spend" id="rtype-spend" onclick="setRewardType('spend')">💰 spendable</button>
+        <button class="rtype-btn" id="rtype-milestone" onclick="setRewardType('milestone')">🏆 milestone</button>
+        <button class="rtype-btn" id="rtype-catmilestone" onclick="setRewardType('catmilestone')">🎯 category goal</button>
+      </div>
+      <div id="form-standard">
+        <div class="row">
+          <input type="text" id="reward-name" placeholder="e.g. bowl of noodles 🍜" />
+          <input type="number" id="reward-pts" placeholder="pts" min="1" />
+          <button class="btn btn-blue" onclick="addReward()">add</button>
+        </div>
+        <div class="hint" id="reward-hint">spendable: points deducted when you redeem</div>
+      </div>
+      <div id="form-catmilestone" style="display:none;">
+        <div class="row">
+          <input type="text" id="cm-name" placeholder="reward name e.g. leetcode beginner 🧠" style="flex:1;" />
+        </div>
+        <div class="cm-form">
+          <select id="cm-cat"><option value="">pick a category...</option></select>
+          <input type="number" id="cm-pts" placeholder="pts threshold" min="1" />
+          <button class="btn" style="border-color:var(--purple-border);color:var(--purple);background:var(--purple-bg);" onclick="addCatMilestone()">add</button>
+        </div>
+        <div class="hint">unlocks when you earn this many points in that specific category</div>
+      </div>
+    </div>
+    <div id="rewards-list"></div>
+  </div>
+
+  <div id="tab-history" class="section">
+    <div id="history-list"></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const SCRIPT_URL='https://script.google.com/macros/s/AKfycbyhuCKEjTwsMSJ7ogL9x8ZMGVw4NeiklIeGUJyFaYNvo94twS0NyQ0pZx3bWnXLwYeMzA/exec';
+let state={points:0,catPoints:{},tasks:[],categories:[],rewards:[],history:[]};
+let formType='task',rewardType='spend',saveTimer=null;
+
+async function loadFromSheet(){
+  setStatus('saving','loading from google sheets...');
+  try{
+    const res=await fetch(SCRIPT_URL+'?action=load');
+    const data=JSON.parse(await res.text());
+    if(data&&data.points!==undefined)state=data;
+    if(!state.categories)state.categories=[];
+    if(!state.rewards)state.rewards=[];
+    if(!state.history)state.history=[];
+    if(!state.catPoints)state.catPoints={};
+    setStatus('ok','synced with google sheets');
+  }catch(e){
+    setStatus('err','could not connect — changes saved locally');
+    const local=localStorage.getItem('rp_fallback');
+    if(local)state=JSON.parse(local);
+  }
+  renderCatDropdown();render();
+}
+
+function scheduleSave(){clearTimeout(saveTimer);saveTimer=setTimeout(saveToSheet,800);}
+
+async function saveToSheet(){
+  setStatus('saving','saving...');
+  localStorage.setItem('rp_fallback',JSON.stringify(state));
+  try{
+    const payload=encodeURIComponent(JSON.stringify(state));
+    await fetch(SCRIPT_URL+'?action=save&payload='+payload);
+    setStatus('ok','saved to google sheets');
+  }catch(e){setStatus('err','save failed — stored locally as backup');}
+}
+
+function setStatus(type,msg){
+  document.getElementById('status-dot').className='status-dot '+type;
+  document.getElementById('status-msg').textContent=msg;
+}
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+function switchTab(tab){
+  ['tasks','rewards','history'].forEach((t,i)=>{
+    document.querySelectorAll('.tab')[i].classList.toggle('active',t===tab);
+    document.getElementById('tab-'+t).classList.toggle('active',t===tab);
+  });
+}
+
+function setFormType(type){
+  formType=type;
+  document.getElementById('btn-task').classList.toggle('active',type==='task');
+  document.getElementById('btn-cat').classList.toggle('active',type==='category');
+  document.getElementById('form-task').style.display=type==='task'?'block':'none';
+  document.getElementById('form-cat').style.display=type==='category'?'block':'none';
+}
+
+function setRewardType(type){
+  rewardType=type;
+  document.getElementById('rtype-spend').className='rtype-btn'+(type==='spend'?' active-spend':'');
+  document.getElementById('rtype-milestone').className='rtype-btn'+(type==='milestone'?' active-milestone':'');
+  document.getElementById('rtype-catmilestone').className='rtype-btn'+(type==='catmilestone'?' active-catmilestone':'');
+  document.getElementById('form-standard').style.display=type!=='catmilestone'?'block':'none';
+  document.getElementById('form-catmilestone').style.display=type==='catmilestone'?'block':'none';
+  if(type==='spend')document.getElementById('reward-hint').textContent='spendable: points deducted when you redeem';
+  if(type==='milestone')document.getElementById('reward-hint').textContent='milestone: auto-unlocks when your total hits this threshold — nothing deducted';
+}
+
+function renderCatDropdown(){
+  const hasCats=state.categories.length>0;
+  document.getElementById('no-cats-hint').style.display=hasCats?'none':'block';
+  document.getElementById('task-fields').style.display=hasCats?'block':'none';
+  const opts=state.categories.map(c=>`<option value="${c.id}">${c.name} (+${c.earnPts}/-${c.skipPts})</option>`).join('');
+  if(hasCats)document.getElementById('task-cat').innerHTML=opts;
+  document.getElementById('cm-cat').innerHTML='<option value="">pick a category...</option>'+
+    state.categories.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+}
+
+function addCategory(){
+  const name=document.getElementById('cat-name').value.trim();
+  const earnPts=parseInt(document.getElementById('cat-earn').value)||0;
+  const skipPts=parseInt(document.getElementById('cat-skip').value)||0;
+  if(!name){showToast('enter a name');return;}
+  if(!earnPts&&!skipPts){showToast('set at least one point value');return;}
+  if(state.categories.find(c=>c.name.toLowerCase()===name.toLowerCase())){showToast('already exists');return;}
+  state.categories.push({id:Date.now(),name,earnPts,skipPts});
+  document.getElementById('cat-name').value='';
+  document.getElementById('cat-earn').value='';
+  document.getElementById('cat-skip').value='';
+  scheduleSave();renderCatDropdown();render();
+  showToast('category added!');
+}
+
+function updateCatPts(id){
+  const earn=parseInt(document.getElementById('eearn-'+id).value);
+  const skip=parseInt(document.getElementById('eskip-'+id).value);
+  const cat=state.categories.find(c=>c.id===id);
+  if(!cat)return;
+  if(!isNaN(earn))cat.earnPts=earn;
+  if(!isNaN(skip))cat.skipPts=skip;
+  document.getElementById('ep-'+id).classList.remove('open');
+  scheduleSave();renderCatDropdown();render();
+  showToast('updated! history unchanged ✓');
+}
+
+function toggleEditPanel(id){document.getElementById('ep-'+id).classList.toggle('open');}
+
+function deleteCategory(id){
+  if(!confirm('delete this category and all its tasks?'))return;
+  state.categories=state.categories.filter(c=>c.id!==id);
+  state.tasks=state.tasks.filter(t=>t.catId!==id);
+  delete state.catPoints[id];
+  scheduleSave();renderCatDropdown();render();
+}
+
+function addTask(){
+  const name=document.getElementById('task-name').value.trim();
+  const catId=parseInt(document.getElementById('task-cat').value);
+  if(!name){showToast('enter a task name');return;}
+  state.tasks.push({id:Date.now(),name,catId});
+  document.getElementById('task-name').value='';
+  scheduleSave();render();
+}
+
+function deleteTask(id){
+  state.tasks=state.tasks.filter(t=>t.id!==id);
+  scheduleSave();render();
+}
+
+function doCategory(catId,done){
+  const cat=state.categories.find(c=>c.id===catId);
+  if(!cat)return;
+  if(!state.catPoints)state.catPoints={};
+  if(done){
+    state.points+=cat.earnPts;
+    state.catPoints[catId]=(state.catPoints[catId]||0)+cat.earnPts;
+    state.history.unshift({type:'earn',name:cat.name,pts:cat.earnPts,time:new Date().toLocaleString()});
+    showToast('+'+cat.earnPts+' pts! 🎉');
+  }else{
+    state.points-=cat.skipPts;
+    state.history.unshift({type:'skip',name:cat.name,pts:cat.skipPts,time:new Date().toLocaleString()});
+    showToast('-'+cat.skipPts+' pts');
+  }
+  checkMilestones();scheduleSave();render();
+}
+
+function addReward(){
+  const name=document.getElementById('reward-name').value.trim();
+  const pts=parseInt(document.getElementById('reward-pts').value);
+  if(!name||!pts||pts<1){showToast('enter name and points');return;}
+  state.rewards.push({id:Date.now(),name,pts,type:rewardType,unlocked:false});
+  document.getElementById('reward-name').value='';
+  document.getElementById('reward-pts').value='';
+  scheduleSave();render();
+}
+
+function addCatMilestone(){
+  const name=document.getElementById('cm-name').value.trim();
+  const catId=parseInt(document.getElementById('cm-cat').value);
+  const pts=parseInt(document.getElementById('cm-pts').value);
+  if(!name){showToast('enter a reward name');return;}
+  if(!catId){showToast('pick a category');return;}
+  if(!pts||pts<1){showToast('enter point threshold');return;}
+  const cat=state.categories.find(c=>c.id===catId);
+  state.rewards.push({id:Date.now(),name,pts,type:'catmilestone',catId,catName:cat?cat.name:'',unlocked:false});
+  document.getElementById('cm-name').value='';
+  document.getElementById('cm-pts').value='';
+  scheduleSave();render();
+  showToast('category goal added!');
+}
+
+function redeemReward(id){
+  const r=state.rewards.find(r=>r.id===id);
+  if(!r||r.type!=='spend'||state.points<r.pts)return;
+  if(!confirm('redeem "'+r.name+'" for '+r.pts+' pts?'))return;
+  state.points-=r.pts;
+  state.history.unshift({type:'redeem',name:r.name,pts:r.pts,time:new Date().toLocaleString()});
+  scheduleSave();render();
+  showToast('enjoy your '+r.name+'! 🎉');
+}
+
+function deleteReward(id){
+  state.rewards=state.rewards.filter(r=>r.id!==id);
+  scheduleSave();render();
+}
+
+function checkMilestones(){
+  state.rewards.forEach(r=>{
+    if(r.unlocked)return;
+    if(r.type==='milestone'&&state.points>=r.pts){
+      r.unlocked=true;
+      setTimeout(()=>showToast('🏆 unlocked: '+r.name+'!'),400);
+    }
+    if(r.type==='catmilestone'){
+      const cp=(state.catPoints||{})[r.catId]||0;
+      if(cp>=r.pts){r.unlocked=true;setTimeout(()=>showToast('🎯 category goal: '+r.name+'!'),400);}
+    }
+  });
+}
+
+function render(){
+  const ptsEl=document.getElementById('total-pts');
+  ptsEl.textContent=state.points;
+  ptsEl.className='num'+(state.points<0?' neg':'');
+
+  // TASKS
+  const tl=document.getElementById('tasks-list');
+  if(!state.categories.length){
+    tl.innerHTML='<div class="empty">no categories yet — add one above</div>';
+  }else{
+    tl.innerHTML=state.categories.map(cat=>{
+      const tasks=state.tasks.filter(t=>t.catId===cat.id);
+      const catPts=(state.catPoints||{})[cat.id]||0;
+      const nextGoal=state.rewards
+        .filter(r=>r.type==='catmilestone'&&r.catId===cat.id&&!(r.unlocked||catPts>=r.pts))
+        .sort((a,b)=>a.pts-b.pts)[0];
+      const pct=nextGoal?Math.min(100,Math.round((catPts/nextGoal.pts)*100)):0;
+      return `<div class="cat-section">
+        <div class="cat-header">
+          <span class="cat-name-text">${cat.name}</span>
+          <span class="badge badge-green">+${cat.earnPts}</span>
+          <span class="badge badge-red">-${cat.skipPts}</span>
+          <span class="badge badge-purple">${catPts} earned</span>
+          <button class="btn btn-ghost" title="edit points" onclick="toggleEditPanel(${cat.id})" style="font-size:13px;">✎</button>
+          <button class="btn btn-ghost" onclick="deleteCategory(${cat.id})">✕</button>
+        </div>
+        ${nextGoal?`<div class="cat-goal-bar">
+          <span class="lbl">🎯 ${catPts}/${nextGoal.pts} → ${nextGoal.name}</span>
+          <div class="cat-mini-bar"><div class="cat-mini-fill" style="width:${pct}%"></div></div>
+          <span class="lbl">${pct}%</span>
+        </div>`:''}
+        <div class="edit-panel" id="ep-${cat.id}">
+          <span style="font-size:11px;color:var(--text3);">new pts:</span>
+          <span class="pts-label earn" style="font-size:11px;">done</span>
+          <input type="number" id="eearn-${cat.id}" placeholder="${cat.earnPts}" style="width:60px;" />
+          <span class="pts-label skip" style="font-size:11px;">skip</span>
+          <input type="number" id="eskip-${cat.id}" placeholder="${cat.skipPts}" style="width:60px;" />
+          <button class="btn" style="font-size:12px;padding:5px 12px;" onclick="updateCatPts(${cat.id})">save</button>
+          <span class="note">⚠ only affects future logs — history unchanged</span>
+        </div>
+        <div class="cat-actions">
+          <button class="btn btn-green" onclick="doCategory(${cat.id},true)">✓ done  +${cat.earnPts}pts</button>
+          <button class="btn btn-red" onclick="doCategory(${cat.id},false)">✕ skipped  -${cat.skipPts}pts</button>
+        </div>
+        ${tasks.length===0
+          ?`<div style="font-size:12px;color:var(--text3);padding:4px 0;">no tasks yet</div>`
+          :tasks.map(t=>`<div class="task-card"><span class="task-card-name">${t.name}</span><button class="btn btn-ghost" onclick="deleteTask(${t.id})">✕</button></div>`).join('')
+        }
+      </div>`;
+    }).join('');
+  }
+
+  // REWARDS
+  const rl=document.getElementById('rewards-list');
+  const spendable=state.rewards.filter(r=>r.type==='spend');
+  const milestones=state.rewards.filter(r=>r.type==='milestone');
+  const catMilestones=state.rewards.filter(r=>r.type==='catmilestone');
+  if(!state.rewards.length){
+    rl.innerHTML='<div class="empty">no rewards yet — add one above</div>';
+  }else{
+    let html='';
+    if(spendable.length){
+      html+=`<div class="reward-section-title">💰 spendable</div>`;
+      spendable.forEach(r=>{
+        const can=state.points>=r.pts;
+        const pct=Math.min(100,Math.round((state.points/r.pts)*100));
+        html+=`<div class="reward-card"><div class="reward-row"><div class="reward-info"><div class="reward-name">${r.name}</div><div class="reward-sub">${r.pts} pts cost · you have ${state.points}</div></div><button class="btn btn-blue" onclick="redeemReward(${r.id})" ${can?'':'disabled'}>redeem</button><button class="btn btn-ghost" onclick="deleteReward(${r.id})">✕</button></div><div class="progress-bar"><div class="progress-fill fill-blue" style="width:${pct}%"></div></div></div>`;
+      });
+    }
+    if(milestones.length){
+      html+=`<div class="reward-section-title">🏆 milestones</div>`;
+      milestones.forEach(r=>{
+        const isU=r.unlocked||state.points>=r.pts;
+        const pct=Math.min(100,Math.round((state.points/r.pts)*100));
+        html+=`<div class="reward-card ${isU?'unlocked':''}"><div class="reward-row"><div class="reward-info"><div class="reward-name">${isU?'🏆 ':'🔒 '}${r.name}</div><div class="reward-sub">${isU?'unlocked!':`unlock at ${r.pts} total pts · you have ${state.points}`}</div></div>${isU?`<span class="milestone-tag">unlocked</span>`:''}<button class="btn btn-ghost" onclick="deleteReward(${r.id})">✕</button></div>${!isU?`<div class="progress-bar"><div class="progress-fill fill-gold" style="width:${pct}%"></div></div>`:''}</div>`;
+      });
+    }
+    if(catMilestones.length){
+      html+=`<div class="reward-section-title">🎯 category goals</div>`;
+      catMilestones.forEach(r=>{
+        const cp=(state.catPoints||{})[r.catId]||0;
+        const isU=r.unlocked||cp>=r.pts;
+        const pct=Math.min(100,Math.round((cp/r.pts)*100));
+        html+=`<div class="reward-card ${isU?'cat-unlocked':''}"><div class="reward-row"><div class="reward-info"><div class="reward-name">${isU?'🎯 ':'🔒 '}${r.name}</div><div class="reward-sub">${isU?'unlocked!':`earn ${r.pts} pts in <b>${r.catName}</b> · you have ${cp}`}</div></div>${isU?`<span class="cat-milestone-tag">unlocked</span>`:''}<button class="btn btn-ghost" onclick="deleteReward(${r.id})">✕</button></div>${!isU?`<div class="progress-bar"><div class="progress-fill fill-purple" style="width:${pct}%"></div></div>`:''}</div>`;
+      });
+    }
+    rl.innerHTML=html;
+  }
+
+  // HISTORY
+  const hl=document.getElementById('history-list');
+  if(!state.history.length){
+    hl.innerHTML='<div class="empty">nothing yet — start earning!</div>';
+  }else{
+    hl.innerHTML=state.history.slice(0,80).map(h=>`
+      <div class="history-item">
+        <div class="h-dot ${h.type}"></div>
+        <div style="flex:1;"><div class="h-name">${h.name}</div><div class="h-time">${h.time}</div></div>
+        <span class="h-pts ${h.type}">${h.type==='earn'?'+':'-'}${h.pts}</span>
+      </div>`).join('');
+  }
+}
+
+loadFromSheet();
+</script>
+
+<script>
+// ONE-TIME SETUP: inject category milestones if not already done
+(async function setupCatMilestones(){
+  if(localStorage.getItem('cat_milestones_injected_v1'))return;
+  const SCRIPT_URL='https://script.google.com/macros/s/AKfycbyhuCKEjTwsMSJ7ogL9x8ZMGVw4NeiklIeGUJyFaYNvo94twS0NyQ0pZx3bWnXLwYeMzA/exec';
+  const LEETCODE_EASY=1780593143760,LEETCODE_MED=1780588556934,LEETCODE_HARD=1780593254142;
+  const WORKOUT=1780593312559,RINGS=1780593346308,SALAD=1780620381860,WAKEUP=1780593205508,NAP=1780593226225;
+  const newGoals=[
+    {name:"😴 Okay fine I opened leetcode",pts:50,catId:LEETCODE_EASY,catName:"Leetcode Easy"},
+    {name:"🧃 Fancy drink on me",pts:150,catId:LEETCODE_EASY,catName:"Leetcode Easy"},
+    {name:"📺 Binge a full show season",pts:300,catId:LEETCODE_EASY,catName:"Leetcode Easy"},
+    {name:"🛋️ Couch grinder pass",pts:50,catId:LEETCODE_MED,catName:"Leetcode Medium"},
+    {name:"🧃 Fancy drink on me",pts:150,catId:LEETCODE_MED,catName:"Leetcode Medium"},
+    {name:"📺 Binge a full show season",pts:300,catId:LEETCODE_MED,catName:"Leetcode Medium"},
+    {name:"🍜 Noodles but make it fancy",pts:600,catId:LEETCODE_MED,catName:"Leetcode Medium"},
+    {name:"🧠 Leetcode warrior",pts:1000,catId:LEETCODE_MED,catName:"Leetcode Medium"},
+    {name:"🛋️ Couch grinder pass",pts:50,catId:LEETCODE_HARD,catName:"Leetcode Hard"},
+    {name:"🔥 Consistent grinder — treat",pts:150,catId:LEETCODE_HARD,catName:"Leetcode Hard"},
+    {name:"🍜 Noodles but make it fancy",pts:300,catId:LEETCODE_HARD,catName:"Leetcode Hard"},
+    {name:"🧠 Leetcode warrior",pts:600,catId:LEETCODE_HARD,catName:"Leetcode Hard"},
+    {name:"😮‍💨 Survived, horizontal for an hour",pts:50,catId:WORKOUT,catName:"Workout 15 mins"},
+    {name:"🚿 Long hot shower + do nothing",pts:150,catId:WORKOUT,catName:"Workout 15 mins"},
+    {name:"🍦 Ice cream, you physically earned it",pts:300,catId:WORKOUT,catName:"Workout 15 mins"},
+    {name:"😴 Sleep in tomorrow, no alarm pass",pts:600,catId:WORKOUT,catName:"Workout 15 mins"},
+    {name:"🛍️ New workout fit",pts:1000,catId:WORKOUT,catName:"Workout 15 mins"},
+    {name:"😮‍💨 Survived, horizontal for an hour",pts:50,catId:RINGS,catName:"close all rings"},
+    {name:"🚿 Long hot shower + do nothing",pts:150,catId:RINGS,catName:"close all rings"},
+    {name:"🍦 Ice cream, you physically earned it",pts:300,catId:RINGS,catName:"close all rings"},
+    {name:"😴 Sleep in tomorrow, no alarm pass",pts:600,catId:RINGS,catName:"close all rings"},
+    {name:"🍫 One small sweet, you stayed healthy",pts:50,catId:SALAD,catName:"half salad"},
+    {name:"🧋 Fancy drink pass",pts:150,catId:SALAD,catName:"half salad"},
+    {name:"🍿 Full movie night snack spread",pts:300,catId:SALAD,catName:"half salad"},
+    {name:"🍰 Slice of something sinful, guilt free",pts:600,catId:SALAD,catName:"half salad"},
+    {name:"🛋️ Full lazy day — order whatever",pts:1000,catId:SALAD,catName:"half salad"},
+    {name:"😴 Okay fine I woke up — nap pass later",pts:50,catId:WAKEUP,catName:"wake up at alarm - beginner"},
+    {name:"☀️ Morning person in training",pts:150,catId:WAKEUP,catName:"wake up at alarm - beginner"},
+    {name:"🛋️ Guilt free lazy afternoon earned",pts:300,catId:WAKEUP,catName:"wake up at alarm - beginner"},
+    {name:"😴 Sleep in once — you've pre-earned it",pts:600,catId:WAKEUP,catName:"wake up at alarm - beginner"},
+    {name:"📵 Phone in bed for an hour, earned",pts:50,catId:NAP,catName:"Skip afternoon nap"},
+    {name:"🛋️ One guilt free lazy afternoon",pts:150,catId:NAP,catName:"Skip afternoon nap"},
+    {name:"😴 Sleep in tomorrow pass",pts:300,catId:NAP,catName:"Skip afternoon nap"},
+    {name:"🍿 Movie night snack spread",pts:600,catId:NAP,catName:"Skip afternoon nap"},
+  ];
+  try{
+    const res=await fetch(SCRIPT_URL+'?action=load');
+    const state=JSON.parse(await res.text());
+    if(!state.catPoints)state.catPoints={};
+    state.rewards=state.rewards.filter(r=>r.type!=='catmilestone');
+    newGoals.forEach(m=>{
+      state.rewards.push({
+        id:Date.now()+Math.random(),
+        name:m.name,pts:m.pts,type:'catmilestone',
+        catId:m.catId,catName:m.catName,
+        unlocked:(state.catPoints[m.catId]||0)>=m.pts
+      });
+    });
+    await fetch(SCRIPT_URL+'?action=save&payload='+encodeURIComponent(JSON.stringify(state)));
+    localStorage.setItem('cat_milestones_injected_v1','true');
+    console.log('✓ category milestones injected!');
+  }catch(e){console.error('setup failed:',e);}
+})();
+</script>
+
+</body>
+</html>
