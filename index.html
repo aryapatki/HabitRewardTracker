@@ -243,7 +243,7 @@ async function saveToSheet(){
   localStorage.setItem('rp_fallback',JSON.stringify(state));
   try{
     const payload=encodeURIComponent(JSON.stringify(state));
-    await fetch(SCRIPT_URL+'?action=save&payload='+payload);
+    await fetch(SCRIPT_URL, {method:'POST', body:JSON.stringify(state)});
     setStatus('ok','saved to google sheets');
   }catch(e){setStatus('err','save failed — stored locally as backup');}
 }
@@ -579,7 +579,7 @@ loadFromSheet();
         unlocked:(state.catPoints[m.catId]||0)>=m.pts
       });
     });
-    await fetch(SCRIPT_URL+'?action=save&payload='+encodeURIComponent(JSON.stringify(state)));
+    await fetch(SCRIPT_URL, {method:'POST', body:JSON.stringify(state)});
     localStorage.setItem('cat_milestones_injected_v1','true');
     console.log('✓ category milestones injected!');
   }catch(e){console.error('setup failed:',e);}
